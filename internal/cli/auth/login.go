@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/fatih/color"
 	"github.com/mongodb/mongodb-atlas-cli/internal/cli"
 	"github.com/mongodb/mongodb-atlas-cli/internal/cli/require"
 	"github.com/mongodb/mongodb-atlas-cli/internal/config"
@@ -57,6 +58,8 @@ var errTimedOut = errors.New("authentication timed out")
 
 type LoginOpts struct {
 	cli.DefaultSetterOpts
+	cli.InputOpts
+	cli.GlobalOpts
 	AccessToken    string
 	RefreshToken   string
 	IsGov          bool
@@ -65,6 +68,7 @@ type LoginOpts struct {
 	SkipConfig     bool
 	config         LoginConfig
 	flow           Authenticator
+	done           bool
 }
 
 type LoginFlow interface {
@@ -123,6 +127,7 @@ func (opts *LoginOpts) Run(ctx context.Context) error {
 	if err := opts.InitStore(ctx); err != nil {
 		return err
 	}
+	fmt.Println(os.Stdin)
 	_, _ = fmt.Fprint(opts.OutWriter, "Press Enter to continue your profile configuration")
 	_, _ = fmt.Scanln()
 	if err := opts.AskOrg(); err != nil {
@@ -155,20 +160,34 @@ func (opts *LoginOpts) Run(ctx context.Context) error {
 
 func (opts *LoginOpts) printAuthInstructions(code *auth.DeviceCode) {
 	codeDuration := time.Duration(code.ExpiresIn) * time.Second
+
 	_, _ = fmt.Fprintf(opts.OutWriter, `
-First, copy your one-time code: %s-%s
+To verify your account, copy your one-time code:
+`)
 
-Next, sign in with your browser and enter the code.
+	codeView := color.New(color.FgYellow, color.Bold)
+	_, _ = codeView.Fprintf(opts.OutWriter, "%s-%s", code.UserCode[0:len(code.UserCode)/2], code.UserCode[len(code.UserCode)/2:])
 
-Or go to %s
+	_, _ = fmt.Fprintf(opts.OutWriter, `
 
-Your code will expire after %.0f minutes.
+Paste the code in the browser when prompted to activate your Atlas CLI. Your code will expire after %.0f minutes.
 `,
-		code.UserCode[0:len(code.UserCode)/2],
-		code.UserCode[len(code.UserCode)/2:],
-		code.VerificationURI,
 		codeDuration.Minutes(),
 	)
+}
+
+func (opts *LoginOpts) handleBrowser(uri string) {
+	if opts.NoBrowser {
+		_, _ = fmt.Fprintf(opts.OutWriter, `
+Go to %s.
+`, uri)
+	} else {
+		go opts.waitForEnter(uri)
+
+		_, _ = fmt.Fprintf(opts.OutWriter, `
+To continue, open the browser by pressing [Enter] or go to %s
+`, uri)
+	}
 }
 
 func (opts *LoginOpts) oauthFlow(ctx context.Context) error {
@@ -178,12 +197,7 @@ func (opts *LoginOpts) oauthFlow(ctx context.Context) error {
 	}
 
 	opts.printAuthInstructions(code)
-
-	if !opts.NoBrowser {
-		if errBrowser := browser.OpenURL(code.VerificationURI); errBrowser != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "There was an issue opening your browser\n")
-		}
-	}
+	opts.handleBrowser(code.VerificationURI)
 
 	var accessToken *auth.Token
 	if accessToken, _, err = opts.flow.PollToken(ctx, code); err != nil {
@@ -196,6 +210,25 @@ func (opts *LoginOpts) oauthFlow(ctx context.Context) error {
 	opts.AccessToken = accessToken.AccessToken
 	opts.RefreshToken = accessToken.RefreshToken
 	return nil
+}
+
+func (opts *LoginOpts) waitForEnter(uri string) {
+	//scanner := bufio.NewScanner(os.Stdin)
+	//
+	//for scanner.Scan() {
+	//	if scanner.Text() == "\n" {
+	//		break
+	//	}
+	//}
+	_, _ = fmt.Scanln()
+	// If the token was already set, no need to open the URL
+	if opts.AccessToken != "" {
+		return
+	}
+
+	if errBrowser := browser.OpenURL(uri); errBrowser != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "There was an issue opening your browser\n")
+	}
 }
 
 func hasUserProgrammaticKeys() bool {
@@ -250,7 +283,7 @@ func LoginBuilder() *cobra.Command {
 			if err := loginPreRun(cmd.Context()); err != nil {
 				return err
 			}
-			return opts.PreRun()
+			return opts.PreRunE(opts.InitInput(cmd.InOrStdin()), opts.PreRun)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return opts.Run(cmd.Context())
