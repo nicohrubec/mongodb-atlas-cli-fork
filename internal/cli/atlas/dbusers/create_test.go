@@ -17,18 +17,18 @@
 package dbusers
 
 import (
+	atlasv2 "go.mongodb.org/atlas/mongodbatlasv2"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/mongodb/mongodb-atlas-cli/internal/mocks"
-	"go.mongodb.org/atlas/mongodbatlas"
 )
 
 func TestDBUserCreateOpts_Run(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockStore := mocks.NewMockDatabaseUserCreator(ctrl)
 
-	expected := &mongodbatlas.DatabaseUser{}
+	expected := &atlasv2.DatabaseUser{}
 
 	createOpts := &CreateOpts{
 		username: "ProjectBar",

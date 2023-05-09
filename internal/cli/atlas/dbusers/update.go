@@ -17,6 +17,7 @@ package dbusers
 import (
 	"context"
 	"fmt"
+	atlasv2 "go.mongodb.org/atlas/mongodbatlasv2"
 
 	"github.com/mongodb/mongodb-atlas-cli/internal/cli"
 	"github.com/mongodb/mongodb-atlas-cli/internal/cli/require"
@@ -26,7 +27,6 @@ import (
 	"github.com/mongodb/mongodb-atlas-cli/internal/store"
 	"github.com/mongodb/mongodb-atlas-cli/internal/usage"
 	"github.com/spf13/cobra"
-	atlas "go.mongodb.org/atlas/mongodbatlas"
 )
 
 const updateTemplate = "Successfully updated database user '{{.Username}}'.\n"
@@ -50,7 +50,7 @@ func (opts *UpdateOpts) initStore(ctx context.Context) func() error {
 }
 
 func (opts *UpdateOpts) Run() error {
-	current := new(atlas.DatabaseUser)
+	current := new(atlasv2.DatabaseUser)
 	opts.update(current)
 
 	r, err := opts.store.UpdateDatabaseUser(current)
@@ -62,15 +62,15 @@ func (opts *UpdateOpts) Run() error {
 	return opts.Print(r)
 }
 
-func (opts *UpdateOpts) update(out *atlas.DatabaseUser) {
-	out.GroupID = opts.ConfigProjectID()
+func (opts *UpdateOpts) update(out *atlasv2.DatabaseUser) {
+	out.GroupId = opts.ConfigProjectID()
 	out.Username = opts.username
 	if opts.password != "" {
-		out.Password = opts.password
+		out.Password = &opts.password
 	}
-
 	out.Scopes = convert.BuildAtlasScopes(opts.scopes)
 	out.Roles = convert.BuildAtlasRoles(opts.roles)
+	out.DatabaseName = convert.GetAuthDB(out)
 }
 
 // mongocli atlas dbuser(s) update <username> [--password password] [--role roleName@dbName] [--projectId projectId].

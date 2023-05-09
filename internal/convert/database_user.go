@@ -15,9 +15,9 @@
 package convert
 
 import (
+	atlasv2 "go.mongodb.org/atlas/mongodbatlasv2"
 	"strings"
 
-	atlas "go.mongodb.org/atlas/mongodbatlas"
 	"go.mongodb.org/ops-manager/opsmngr"
 )
 
@@ -33,23 +33,70 @@ const (
 
 // BuildAtlasRoles converts the roles inside the array of string in an array of mongodbatlas.Role structs.
 // r contains roles in the format roleName@dbName.
-func BuildAtlasRoles(r []string) []atlas.Role {
-	roles := make([]atlas.Role, len(r))
+func BuildAtlasRoles(r []string) []atlasv2.Role {
+	roles := make([]atlasv2.Role, len(r))
 	for i, roleP := range r {
 		roleName, databaseName := splitRoleAndDBName(roleP)
-		var collectionName string
 		dbCollection := strings.Split(databaseName, collectionSep)
 		databaseName = dbCollection[0]
-		if len(dbCollection) > 1 {
-			collectionName = strings.Join(dbCollection[1:], ".")
-		}
-		roles[i] = atlas.Role{
+		roles[i] = atlasv2.Role{
 			RoleName:       roleName,
 			DatabaseName:   databaseName,
-			CollectionName: collectionName,
+			CollectionName: buildCollectionName(dbCollection),
 		}
 	}
 	return roles
+}
+
+func buildCollectionName(dbCollection []string) *string {
+	var collectionName string
+	if len(dbCollection) > 1 {
+		collectionName = strings.Join(dbCollection[1:], ".")
+	}
+	return getStringPointerIfNotEmpty(collectionName)
+}
+
+// GetAuthDB determines the authentication database based on the type of user.
+// LDAP, X509 and AWSIAM should all use $external.
+// SCRAM-SHA should use admin.
+func GetAuthDB(user *atlasv2.DatabaseUser)  (name string) {
+	// base documentation https://registry.terraform.io/providers/mongodb/mongodbatlas/latest/docs/resources/database_user
+	name = "admin"
+	_, isX509 := adminX509Type[getStringIfPointerNotNil(user.X509Type)]
+	_, isIAM := awsIAMType[getStringIfPointerNotNil(user.AwsIAMType)]
+
+	// just USER is external
+	isLDAP := user.LdapAuthType != nil && len(*user.LdapAuthType) > 0 && *user.LdapAuthType == "USER"
+
+	if isX509 || isIAM || isLDAP {
+		return "$external"
+	}
+
+	return name
+}
+
+var adminX509Type = map[string]struct{}{
+	"MANAGED":  {},
+	"CUSTOMER": {},
+}
+
+var awsIAMType = map[string]struct{}{
+	"USER": {},
+	"ROLE": {},
+}
+
+func getStringPointerIfNotEmpty(input string) *string{
+	if input != "" {
+		return &input
+	}
+	return nil
+}
+
+func getStringIfPointerNotNil(input *string) string{
+	if input != nil {
+		return *input
+	}
+	return ""
 }
 
 func splitRoleAndDBName(roleAndDBNAme string) (role, dbName string) {
@@ -79,8 +126,8 @@ func BuildOMRoles(r []string) []*opsmngr.Role {
 
 // BuildAtlasScopes converts the scopes inside the array of string in an array of mongodbatlas.Scope structs.
 // r contains resources in the format resourceName:resourceType.
-func BuildAtlasScopes(r []string) []atlas.Scope {
-	scopes := make([]atlas.Scope, len(r))
+func BuildAtlasScopes(r []string) []atlasv2.UserScope {
+	scopes := make([]atlasv2.UserScope, len(r))
 	for i, scopeP := range r {
 		scope := strings.Split(scopeP, scopeSep)
 		resourceType := defaultResourceType
@@ -88,7 +135,7 @@ func BuildAtlasScopes(r []string) []atlas.Scope {
 			resourceType = scope[1]
 		}
 
-		scopes[i] = atlas.Scope{
+		scopes[i] = atlasv2.UserScope{
 			Name: scope[0],
 			Type: strings.ToUpper(resourceType),
 		}

@@ -18,6 +18,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	atlasv2 "go.mongodb.org/atlas/mongodbatlasv2"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/mongodb/mongodb-atlas-cli/internal/cli"
@@ -29,7 +31,6 @@ import (
 	"github.com/mongodb/mongodb-atlas-cli/internal/usage"
 	"github.com/mongodb/mongodb-atlas-cli/internal/validate"
 	"github.com/spf13/cobra"
-	atlas "go.mongodb.org/atlas/mongodbatlas"
 )
 
 type CreateOpts struct {
@@ -98,25 +99,34 @@ func (opts *CreateOpts) Run() error {
 	return opts.Print(r)
 }
 
-func (opts *CreateOpts) newDatabaseUser() *atlas.DatabaseUser {
+func (opts *CreateOpts) newDatabaseUser() *atlasv2.DatabaseUser {
 	authDB := convert.AdminDB
 
 	if opts.isExternal() && opts.ldapType != group {
 		authDB = convert.ExternalAuthDB
 	}
 
-	return &atlas.DatabaseUser{
+	return &atlasv2.DatabaseUser{
 		Roles:           convert.BuildAtlasRoles(opts.roles),
 		Scopes:          convert.BuildAtlasScopes(opts.scopes),
-		GroupID:         opts.ConfigProjectID(),
+		GroupId:         opts.ConfigProjectID(),
 		Username:        opts.username,
-		Password:        opts.password,
-		X509Type:        opts.x509Type,
-		AWSIAMType:      opts.awsIamType,
-		LDAPAuthType:    opts.ldapType,
-		DeleteAfterDate: opts.deleteAfter,
+		Password:        &opts.password,
+		X509Type:        &opts.x509Type,
+		AwsIAMType:      &opts.awsIamType,
+		LdapAuthType:    &opts.ldapType,
+		DeleteAfterDate: parseDeleteAfter(opts.deleteAfter),
 		DatabaseName:    authDB,
 	}
+}
+
+func parseDeleteAfter(deleteAfter string) *time.Time {
+	deleteAfterDate, err := time.Parse(time.RFC3339, deleteAfter)
+
+	if err == nil {
+		return &deleteAfterDate
+	}
+	return nil
 }
 
 func (opts *CreateOpts) Prompt() error {

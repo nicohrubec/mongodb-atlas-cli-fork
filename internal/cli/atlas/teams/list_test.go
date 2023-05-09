@@ -17,18 +17,18 @@
 package teams
 
 import (
+	atlasv2 "go.mongodb.org/atlas/mongodbatlasv2"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	mocks "github.com/mongodb/mongodb-atlas-cli/internal/mocks/atlas"
-	"go.mongodb.org/atlas/mongodbatlas"
 )
 
 func TestList_Run(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockStore := mocks.NewMockTeamLister(ctrl)
 
-	var expected []mongodbatlas.Team
+	var expected *atlasv2.PaginatedTeam
 
 	listOpts := &ListOpts{
 		store: mockStore,

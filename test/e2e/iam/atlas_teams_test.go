@@ -19,6 +19,7 @@ package iam_test
 import (
 	"encoding/json"
 	"fmt"
+	atlasv2 "go.mongodb.org/atlas/mongodbatlasv2"
 	"os"
 	"os/exec"
 	"testing"
@@ -117,9 +118,9 @@ func TestAtlasTeams(t *testing.T) {
 		a := assert.New(t)
 		a.NoError(err, string(resp))
 
-		var teams []mongodbatlas.Team
+		var teams atlasv2.PaginatedTeam
 		if err := json.Unmarshal(resp, &teams); a.NoError(err) {
-			a.NotEmpty(t, teams)
+			a.NotEmpty(t, teams.Results)
 		}
 	})
 

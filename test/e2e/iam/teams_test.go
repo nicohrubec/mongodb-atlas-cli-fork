@@ -19,13 +19,13 @@ package iam_test
 import (
 	"encoding/json"
 	"fmt"
+	atlasv2 "go.mongodb.org/atlas/mongodbatlasv2"
 	"os"
 	"os/exec"
 	"testing"
 
 	"github.com/mongodb/mongodb-atlas-cli/test/e2e"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/atlas/mongodbatlas"
 )
 
 func TestTeams(t *testing.T) {
@@ -62,7 +62,7 @@ func TestTeams(t *testing.T) {
 		a := assert.New(t)
 		a.NoError(err, string(resp))
 
-		var team mongodbatlas.Team
+		var team atlasv2.Team
 		if err := json.Unmarshal(resp, &team); a.NoError(err) {
 			a.Equal(teamName, team.Name)
 			teamID = team.ID
@@ -83,7 +83,7 @@ func TestTeams(t *testing.T) {
 		a := assert.New(t)
 		a.NoError(err, string(resp))
 
-		var team mongodbatlas.Team
+		var team atlasv2.TeamResponse
 		if err := json.Unmarshal(resp, &team); a.NoError(err) {
 			a.Equal(teamID, team.ID)
 		}
@@ -103,7 +103,7 @@ func TestTeams(t *testing.T) {
 		a := assert.New(t)
 		a.NoError(err, string(resp))
 
-		var team mongodbatlas.Team
+		var team atlasv2.TeamResponse
 		if err := json.Unmarshal(resp, &team); a.NoError(err) {
 			a.Equal(teamName, team.Name)
 		}
@@ -121,9 +121,9 @@ func TestTeams(t *testing.T) {
 		a := assert.New(t)
 		a.NoError(err, string(resp))
 
-		var teams []mongodbatlas.Team
+		var teams atlasv2.PaginatedTeam
 		if err := json.Unmarshal(resp, &teams); a.NoError(err) {
-			a.NotEmpty(t, teams)
+			a.NotEmpty(t, teams.Results)
 		}
 	})
 
