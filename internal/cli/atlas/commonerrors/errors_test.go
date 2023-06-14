@@ -20,7 +20,7 @@ import (
 	"errors"
 	"testing"
 
-	atlas "go.mongodb.org/atlas/mongodbatlas"
+	atlasv2 "go.mongodb.org/atlas-sdk/admin"
 )
 
 func TestCheck(t *testing.T) {
@@ -38,7 +38,7 @@ func TestCheck(t *testing.T) {
 		},
 		{
 			name: "unsupported cluster update",
-			err: &atlas.ErrorResponse{
+			err: &atlasv2.Error{
 				ErrorCode: "TENANT_CLUSTER_UPDATE_UNSUPPORTED",
 			},
 			want: errClusterUnsupported,
