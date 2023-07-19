@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package quickstart
+package setup
 
 import (
 	"errors"
@@ -26,7 +26,7 @@ import (
 	"github.com/mongodb/mongodb-atlas-cli/internal/search"
 	"github.com/mongodb/mongodb-atlas-cli/internal/telemetry"
 	"github.com/mongodb/mongodb-atlas-cli/internal/usage"
-	atlasv2 "go.mongodb.org/atlas-sdk/admin"
+	atlasv2 "go.mongodb.org/atlas-sdk/v20230201002/admin"
 	atlas "go.mongodb.org/atlas/mongodbatlas"
 )
 
@@ -184,7 +184,7 @@ func (opts *Opts) providerName() string {
 	return providerName(opts.Tier, opts.Provider)
 }
 
-func (opts *quickstart) providerName() string {
+func (opts *clusterSettings) providerName() string {
 	return providerName(opts.Tier, opts.Provider)
 }
 

@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1.3-labs
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.6
+ENV MONGODB_ATLAS_IS_CONTAINERIZED=true
 
 COPY <<EOF /etc/yum.repos.d/mongodb-org-x86_64-6.0.repo
 [mongodb-org-x86_64-6.0]
@@ -26,4 +27,4 @@ RUN microdnf -y install jq yum &&\
     microdnf clean all &&\
     rm -rf /var/cache
 
-ENTRYPOINT ["/bin/bash"]
+CMD ["tail", "-f", "/dev/null"]

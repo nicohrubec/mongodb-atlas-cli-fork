@@ -27,7 +27,7 @@ import (
 	"github.com/mongodb/mongodb-atlas-cli/internal/store"
 	"github.com/mongodb/mongodb-atlas-cli/internal/telemetry"
 	"github.com/mongodb/mongodb-atlas-cli/internal/validate"
-	atlasv2 "go.mongodb.org/atlas-sdk/admin"
+	atlasv2 "go.mongodb.org/atlas-sdk/v20230201002/admin"
 	atlas "go.mongodb.org/atlas/mongodbatlas"
 	"go.mongodb.org/ops-manager/opsmngr"
 )
@@ -383,13 +383,17 @@ func omProjects(projects []*opsmngr.Project) (ids, names []string) {
 }
 
 func (*DefaultSetterOpts) DefaultQuestions() []*survey.Question {
+	defaultOutput := config.Output()
+	if defaultOutput == "" {
+		defaultOutput = plaintextFormat
+	}
 	q := []*survey.Question{
 		{
 			Name: "output",
 			Prompt: &survey.Select{
 				Message: "Default Output Format:",
 				Options: []string{plaintextFormat, jsonFormat},
-				Default: config.Output(),
+				Default: defaultOutput,
 			},
 		},
 	}
