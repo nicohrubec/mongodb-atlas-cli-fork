@@ -37,6 +37,15 @@ jobs:
         with:
           username: "${{ secrets.CONTAINER_USER }}"
           password: "${{ secrets.CONTAINER_SECRET }}"
+      - name: Build and export to Docker
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          load: true
+          tags: ${{ env.IMAGE_REPOSITORY }}:${{ env.LATEST_VERSION }}
+      - name: Test
+        run: |
+          docker run --rm ${{ env.IMAGE_REPOSITORY }}:${{ env.LATEST_VERSION }} atlas --help
       - name: Build and push container to Dockerhub
         uses: docker/build-push-action@v4
         with:
