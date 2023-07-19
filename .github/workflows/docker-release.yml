@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGE_REPOSITORY: nicohrubec266/atlascli
-      PLATFORMS: linux/arm64
+      PLATFORMS: linux/amd64,linux/arm64
     steps:
       - name: Check out code
         uses: actions/checkout@v3.5.3
@@ -37,15 +37,6 @@ jobs:
         with:
           username: "${{ secrets.CONTAINER_USER }}"
           password: "${{ secrets.CONTAINER_SECRET }}"
-      - name: Build and export to Docker
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          load: true
-          tags: ${{ env.IMAGE_REPOSITORY }}:${{ env.LATEST_VERSION }}
-      - name: Test
-        run: |
-          docker run --rm ${{ env.IMAGE_REPOSITORY }}:${{ env.LATEST_VERSION }} mongosh
       - name: Build and push container to Dockerhub
         uses: docker/build-push-action@v4
         with:
