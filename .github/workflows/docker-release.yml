@@ -45,7 +45,7 @@ jobs:
           tags: ${{ env.IMAGE_REPOSITORY }}:${{ env.LATEST_VERSION }}
       - name: Test
         run: |
-          docker run --rm ${{ env.IMAGE_REPOSITORY }}:${{ env.LATEST_VERSION }} atlas --help
+          docker run --rm ${{ env.IMAGE_REPOSITORY }}:${{ env.LATEST_VERSION }} mongosh
       - name: Build and push container to Dockerhub
         uses: docker/build-push-action@v4
         with:
