@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGE_REPOSITORY: nicohrubec266/atlascli
-      PLATFORMS: linux/amd64
+      PLATFORMS: linux/arm64
     steps:
       - name: Check out code
         uses: actions/checkout@v3.5.3
