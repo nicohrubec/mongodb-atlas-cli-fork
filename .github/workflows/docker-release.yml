@@ -21,7 +21,7 @@ jobs:
         id: set-date
         run: |
           DATE=$(date +'%Y-%m-%d')
-          echo DATE=${DATE} >> $GITHUB_OUTPUT
+          echo DATE=${DATE} >> $GITHUB_ENV
       - name: 'Get latest tag'
         id: get-latest-tag
         uses: actions-ecosystem/action-get-latest-tag@v1
