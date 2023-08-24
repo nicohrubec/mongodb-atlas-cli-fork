@@ -25,7 +25,7 @@ jobs:
         uses: oprypin/find-latest-tag@v1
         with:
           repository: mongodb/mongodb-atlas-cli
-          release-only: true
+          releases-only: true
           regex: 'atlascli*'
       - name: Extract version
         run: |
