@@ -2,8 +2,6 @@
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.6
 ENV MONGODB_ATLAS_IS_CONTAINERIZED=true
 
-COPY entrypoint.sh /entrypoint.sh
-
 COPY <<EOF /etc/yum.repos.d/mongodb-org-x86_64-6.0.repo
 [mongodb-org-x86_64-6.0]
 name=MongoDB Repository
